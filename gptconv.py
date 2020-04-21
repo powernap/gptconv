@@ -6,6 +6,8 @@
 # Version: 1.0 (2020-04-19)
 #
 # This is only intended to work on FreeNAS / TrueNAS CORE.
+# Probably needs to be run with elevated privileges, due to diskinfo calls,
+# when -d is used.
 # This tool is not provided, sponsored, endorsed, or supported by iXsystems.
 #
 # Suggested usages:

@@ -17,7 +17,7 @@ optional arguments:
   -o [outfile]  Output file (omit for stdout)
 ```
 
-This is only intended to work on FreeNAS / TrueNAS CORE. It should work on any FreeBSD-based system, though.
+This is only intended to work on FreeNAS / TrueNAS CORE. It should work on any FreeBSD-based system, though. Probably needs to be run with elevated privileges, due to diskinfo calls, when -d is used.
 This tool is not provided, sponsored, endorsed, or supported by iXsystems.
 
 Suggested usage:
