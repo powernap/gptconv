@@ -3,7 +3,7 @@ streaming-capable conversion of gptid to device name
 
 ```
 # ./gptconv.py -h
-usage: gptconv.py [-h] [-d] [-p] [-o [outfile]] [infile]
+usage: gptconv.py [-h] [-d] [-s] [-p] [-o [outfile]] [infile]
 
 convert gptid to device name
 
@@ -13,6 +13,7 @@ positional arguments:
 optional arguments:
   -h, --help    show this help message and exit
   -d            Insert disk description
+  -s            Insert disk serial number
   -p            Do not try to fix padding on output
   -o [outfile]  Output file (omit for stdout)
 ```

@@ -3,7 +3,13 @@
 # gptconv.py
 # streaming-capable conversion of gptid to device name
 #
-# Version: 1.0 (2020-04-19)
+# Version: 1.1 (2020-10-03)
+#
+# Version History:
+# 1.1 - Added -s option to print serial numbers
+#     - Added extra space when exceeding original width of field when not
+#       in -p mode
+# 1.0 - Initial release
 #
 # This is only intended to work on FreeNAS / TrueNAS CORE.
 # This tool is not provided, sponsored, endorsed, or supported by iXsystems.
