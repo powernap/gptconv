@@ -6,8 +6,6 @@
 # Version: 1.0 (2020-04-19)
 #
 # This is only intended to work on FreeNAS / TrueNAS CORE.
-# Probably needs to be run with elevated privileges, due to diskinfo calls,
-# when -d is used.
 # This tool is not provided, sponsored, endorsed, or supported by iXsystems.
 #
 # Suggested usages:
@@ -73,34 +71,54 @@ GPTID_RE = re.compile('(gptid/[0-9A-Fa-f-]+(?:\.eli)?)(\s*)')
 def ctrlc_handler(sig, frame):
     sys.exit(0)
 
-class DiskDesc:
+class DiskInfo:
     NAME_RE = re.compile('(.*?)(p[0-9]+)?$')
     DESCR_RE = re.compile('(.*?)(# Disk descr.)$')
     UNKNOWN_STR = 'UNKNOWN'
     def __init__(self):
         self.desc_dict = dict()
+        self.serial_dict = dict()
 
     def _fetch_desc(self, devname):
-        disk_desc = DiskDesc.UNKNOWN_STR
+        disk_desc = DiskInfo.UNKNOWN_STR
         diskinfo_cp = subprocess.run(['diskinfo', '-v', f'/dev/{devname}'],
                                      capture_output=True,
                                      check=False,
                                      text=True)
         if diskinfo_cp.returncode == 0:
             for line in diskinfo_cp.stdout.splitlines():
-                desc_match = DiskDesc.DESCR_RE.match(line)
+                desc_match = DiskInfo.DESCR_RE.match(line)
                 if desc_match is not None:
                     disk_desc = desc_match.group(1).strip()
         return disk_desc
 
     def get_desc(self, name):
         try:
-            devname = DiskDesc.NAME_RE.match(name).group(1)
+            devname = DiskInfo.NAME_RE.match(name).group(1)
         except AttributeError:
-            return DiskDesc.UNKNOWN_STR
+            return DiskInfo.UNKNOWN_STR
         if devname not in self.desc_dict:
             self.desc_dict[devname] = self._fetch_desc(devname)
         return self.desc_dict[devname]
+
+    def _fetch_serial(self, devname):
+        disk_serial = DiskInfo.UNKNOWN_STR
+        diskinfo_cp = subprocess.run(['diskinfo', '-s', f'/dev/{devname}'],
+                                     capture_output=True,
+                                     check=False,
+                                     text=True)
+        if diskinfo_cp.returncode == 0:
+            disk_serial = diskinfo_cp.stdout.strip()
+        return disk_serial
+
+    def get_serial(self, name):
+        try:
+            devname = DiskInfo.NAME_RE.match(name).group(1)
+        except AttributeError:
+            return DiskInfo.UNKNOWN_STR
+        if devname not in self.serial_dict:
+            self.serial_dict[devname] = self._fetch_serial(devname)
+        return self.serial_dict[devname]
 
 def build_gpt_label_dict():
     glabel_dict = dict()
@@ -120,6 +138,8 @@ def gptconv():
                 description='convert gptid to device name')
     parser.add_argument('-d', action='store_true',
                         help='Insert disk description')
+    parser.add_argument('-s', action='store_true',
+                        help='Insert disk serial number')
     parser.add_argument('-p', action='store_false',
                         help='Do not try to fix padding on output')
     parser.add_argument('infile', nargs='?', type=argparse.FileType('r'),
@@ -129,16 +149,23 @@ def gptconv():
                         help='Output file (omit for stdout)')
     args = parser.parse_args()
     glabel_dict = build_gpt_label_dict()
-    dd = DiskDesc()
+    dd = DiskInfo()
     for line in args.infile:
         gpt_to_rep = GPTID_RE.findall(line)
         for gptid,ws in gpt_to_rep:
-            repl_str = glabel_dict[gptid.replace('.eli','')]
+            disk_name = glabel_dict[gptid.replace('.eli','')]
+            repl_str = disk_name
             if args.d:
-                desc = dd.get_desc(repl_str)
+                desc = dd.get_desc(disk_name)
                 repl_str = f'{repl_str} ({desc})'
+            if args.s:
+                serial = dd.get_serial(disk_name)
+                repl_str = f'{repl_str} ({serial})'
             if args.p:
-                repl_str = repl_str.ljust(len(gptid) + len(ws))
+                if len(repl_str) >= (len(gptid) + len(ws)):
+                    repl_str = f'{repl_str} '
+                else:
+                    repl_str = repl_str.ljust(len(gptid) + len(ws))
             line = line.replace(f'{gptid}{ws}', repl_str, 1)
         print(line, end='', file=args.o)
 
