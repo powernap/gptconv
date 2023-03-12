@@ -1,3 +1,7 @@
+# ARCHIVED
+
+This was a fun little toy, but is pretty pointless given zpool status options/scripts and that all my personal systems are TrueNAS SCALE now. Therefore, I have archived the repo.
+
 # gptconv.py
 streaming-capable conversion of gptid to device name
 
